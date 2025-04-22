@@ -1,0 +1,7 @@
+<library path="lib/libopposing_robot_layer">
+  <class name="opposing_robot_layer::OpposingRobotLayer"
+         type="opposing_robot_layer::OpposingRobotLayer"
+         base_class_type="costmap_2d::Layer">
+    <description>A layer that tracks and avoids an opposing robot using global_ball_data.</description>
+  </class>
+</library>
