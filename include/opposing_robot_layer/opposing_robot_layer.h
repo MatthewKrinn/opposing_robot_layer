@@ -4,7 +4,6 @@
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <geometry_msgs/PoseWithCovariance.h>
 #include <ros/ros.h>
 #include <mutex>
 
@@ -23,7 +22,7 @@ public:
                            int min_i, int min_j, int max_i, int max_j);
 
 private:
-  void ballCallback(const geometry_msgs::PoseWithCovariance::ConstPtr& msg);
+  void ballCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg);
 
   std::mutex data_mutex_;
   bool has_data_;
