@@ -11,6 +11,7 @@ OpposingRobotLayer::OpposingRobotLayer() : has_data_(false) {}
 
 void OpposingRobotLayer::onInitialize()
 {
+  ROS_INFO("Initializing Opposing Robot Layer...");
   ros::NodeHandle nh("~/" + name_);
   current_ = true;
 
@@ -18,6 +19,7 @@ void OpposingRobotLayer::onInitialize()
 
   // Subscribe to the opposing robot’s pose with covariance
   subscriber_ = nh.subscribe("/global_ball_data", 1, &OpposingRobotLayer::ballCallback, this);
+  ROS_INFO("DONE INITIALIZNG")
 }
 
 void OpposingRobotLayer::ballCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
