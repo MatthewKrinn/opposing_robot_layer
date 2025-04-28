@@ -22,7 +22,7 @@ void OpposingRobotLayer::onInitialize()
   ROS_INFO("DONE INITIALIZNG");
 }
 
-void OpposingRobotLayer::ballCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg)
+void OpposingRobotLayer::ballCallback(const geometry_msgs::PoseWithCovariance::ConstPtr& msg)
 {
   std::lock_guard<std::mutex> lock(data_mutex_);
   robot_x_ = msg->pose.pose.position.x;
