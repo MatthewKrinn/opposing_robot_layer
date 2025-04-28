@@ -1,5 +1,5 @@
 #include <opposing_robot_layer/opposing_robot_layer.h>
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 #include <costmap_2d/costmap_math.h>
 
 PLUGINLIB_EXPORT_CLASS(opposing_robot_layer::OpposingRobotLayer, costmap_2d::Layer)
