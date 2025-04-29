@@ -110,6 +110,8 @@ touched_cells_.emplace_back(nx, ny);
 }
 }
 
+}
+
 
 // void OpposingRobotLayer::updateCosts(costmap_2d::Costmap2D& master_grid,
 //                                      int min_i, int min_j, int max_i, int max_j)
