@@ -48,47 +48,111 @@ void OpposingRobotLayer::updateBounds(double origin_x, double origin_y, double o
 }
 
 void OpposingRobotLayer::updateCosts(costmap_2d::Costmap2D& master_grid,
-                                     int min_i, int min_j, int max_i, int max_j)
+  int min_i, int min_j, int max_i, int max_j)
 {
-  if (!enabled_ || !has_data_) return;
+if (!enabled_ || !has_data_) return;
 
-  std::lock_guard<std::mutex> lock(data_mutex_);
+std::lock_guard<std::mutex> lock(data_mutex_);
 
-  unsigned int mx, my;
-  if (!master_grid.worldToMap(robot_x_, robot_y_, mx, my)) return;
+// 🔥 1. First clear previous ball costs
+for (const auto& cell : touched_cells_)
+{
+int x = cell.first;
+int y = cell.second;
+if (x >= 0 && y >= 0 &&
+x < static_cast<int>(master_grid.getSizeInCellsX()) &&
+y < static_cast<int>(master_grid.getSizeInCellsY()))
+{
+master_grid.setCost(x, y, costmap_2d::FREE_SPACE);
+}
+}
+touched_cells_.clear();  // Clear history to record new cells
 
-  double radius = std::sqrt(covariance_x_ + covariance_y_) * 2.0;
-  int cell_radius = static_cast<int>(radius / master_grid.getResolution());
+// 🔥 2. Now apply the new ball cost footprint
+unsigned int mx, my;
+if (!master_grid.worldToMap(robot_x_, robot_y_, mx, my)) return;
 
-  for (int dx = -cell_radius; dx <= cell_radius; ++dx)
-  {
-    for (int dy = -cell_radius; dy <= cell_radius; ++dy)
-    {
-      int nx = mx + dx;
-      int ny = my + dy;
+double radius = std::sqrt(covariance_x_ + covariance_y_) * 2.0;
+int cell_radius = static_cast<int>(radius / master_grid.getResolution());
+unsigned char min_inflation_cost = costmap_2d::INSCRIBED_INFLATED_OBSTACLE;  // Soft minimum cost at edge
 
-      if (nx >= 0 && ny >= 0 &&
-          nx < static_cast<int>(master_grid.getSizeInCellsX()) &&
-          ny < static_cast<int>(master_grid.getSizeInCellsY()))
-      {
-        double dist = std::sqrt(dx * dx + dy * dy) * master_grid.getResolution();
-        unsigned char old_cost = master_grid.getCost(nx, ny);
+for (int dx = -cell_radius; dx <= cell_radius; ++dx)
+{
+for (int dy = -cell_radius; dy <= cell_radius; ++dy)
+{
+int nx = mx + dx;
+int ny = my + dy;
 
-        // 🔴 Lethal zone: direct obstacle
-        if (dist <= radius * 0.3)
-        {
-          if (old_cost < costmap_2d::LETHAL_OBSTACLE)
-            master_grid.setCost(nx, ny, costmap_2d::LETHAL_OBSTACLE);
-        }
-        // 🟠 Buffer zone: soft inflation area
-        else if (dist <= radius)
-        {
-          if (old_cost < costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
-            master_grid.setCost(nx, ny, costmap_2d::INSCRIBED_INFLATED_OBSTACLE);
-        }
-      }
-    }
-  }
+if (nx >= 0 && ny >= 0 &&
+nx < static_cast<int>(master_grid.getSizeInCellsX()) &&
+ny < static_cast<int>(master_grid.getSizeInCellsY()))
+{
+double dist = std::sqrt(dx * dx + dy * dy) * master_grid.getResolution();
+
+if (dist <= radius)
+{
+double ratio = dist / radius;
+unsigned char new_cost = static_cast<unsigned char>(
+(1.0 - ratio) * (costmap_2d::LETHAL_OBSTACLE - min_inflation_cost) + min_inflation_cost);
+
+unsigned char old_cost = master_grid.getCost(nx, ny);
+
+if (new_cost > old_cost)
+{
+master_grid.setCost(nx, ny, new_cost);
 }
 
-} // namespace opposing_robot_layer
+// 🔥 Record which cells we modified
+touched_cells_.emplace_back(nx, ny);
+}
+}
+}
+}
+}
+
+
+// void OpposingRobotLayer::updateCosts(costmap_2d::Costmap2D& master_grid,
+//                                      int min_i, int min_j, int max_i, int max_j)
+// {
+//   if (!enabled_ || !has_data_) return;
+
+//   std::lock_guard<std::mutex> lock(data_mutex_);
+
+//   unsigned int mx, my;
+//   if (!master_grid.worldToMap(robot_x_, robot_y_, mx, my)) return;
+
+//   double radius = std::sqrt(covariance_x_ + covariance_y_) * 2.0;
+//   int cell_radius = static_cast<int>(radius / master_grid.getResolution());
+
+//   for (int dx = -cell_radius; dx <= cell_radius; ++dx)
+//   {
+//     for (int dy = -cell_radius; dy <= cell_radius; ++dy)
+//     {
+//       int nx = mx + dx;
+//       int ny = my + dy;
+
+//       if (nx >= 0 && ny >= 0 &&
+//           nx < static_cast<int>(master_grid.getSizeInCellsX()) &&
+//           ny < static_cast<int>(master_grid.getSizeInCellsY()))
+//       {
+//         double dist = std::sqrt(dx * dx + dy * dy) * master_grid.getResolution();
+//         unsigned char old_cost = master_grid.getCost(nx, ny);
+
+//         // 🔴 Lethal zone: direct obstacle
+//         if (dist <= radius * 0.3)
+//         {
+//           if (old_cost < costmap_2d::LETHAL_OBSTACLE)
+//             master_grid.setCost(nx, ny, costmap_2d::LETHAL_OBSTACLE);
+//         }
+//         // 🟠 Buffer zone: soft inflation area
+//         else if (dist <= radius)
+//         {
+//           if (old_cost < costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+//             master_grid.setCost(nx, ny, costmap_2d::INSCRIBED_INFLATED_OBSTACLE);
+//         }
+//       }
+//     }
+//   }
+// }
+
+// } // namespace opposing_robot_layer
