@@ -39,7 +39,7 @@ void OpposingRobotLayer::updateBounds(double origin_x, double origin_y, double o
 
   std::lock_guard<std::mutex> lock(data_mutex_);
 
-  double radius = std::sqrt(covariance_x_ + covariance_y_) * 2.0;
+  double radius = std::sqrt(covariance_x_ + covariance_y_) * 20.0;
 
   *min_x = std::min(*min_x, robot_x_ - radius);
   *min_y = std::min(*min_y, robot_y_ - radius);
